@@ -19,7 +19,9 @@
               --replace facebook/opt-350m ${pkgs.callPackage ./model.nix {}}
           '';
 
-          propagatedBuildInputs = with pkgs.python3Packages; [ torch transformers ];
+          propagatedBuildInputs =
+            with pkgs.python3Packages;
+            [ discordpy torch transformers ];
         };
       }
     );

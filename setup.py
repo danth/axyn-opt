@@ -7,6 +7,7 @@ setup(
     author_email="danthwaites30@btinternet.com",
     packages=["axyn"],
     install_requires=[
+        "discord.py >=2,<3",
         "torch >=1,<2",
         "transformers >=4,<5"
     ],
