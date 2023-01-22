@@ -41,6 +41,14 @@ def main():
 
     with ThreadPoolExecutor(max_workers=1) as executor:
         @client.event
+        async def on_ready():
+            # Remove all slash commands in case they exist from a previous
+            # incarnation of Axyn
+            commands = discord.app_commands.CommandTree(client)
+            commands.clear_commands(guild=None)
+            await commands.sync()
+
+        @client.event
         async def on_message(message):
             if message.author == client.user:
                 return
