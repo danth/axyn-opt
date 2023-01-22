@@ -5,8 +5,11 @@
   };
 
   outputs =
-    { nixpkgs, utils, ... }:
-    utils.lib.eachDefaultSystem (
+    { nixpkgs, utils, self, ... }:
+    {
+      nixosModules.axyn = import ./nixos.nix self;
+    } //
+    (utils.lib.eachDefaultSystem (
       system:
       let pkgs = nixpkgs.legacyPackages.${system};
       in {
@@ -24,5 +27,5 @@
             [ discordpy torch transformers ];
         };
       }
-    );
+    ));
 }
