@@ -6,7 +6,8 @@ import torch
 from transformers import pipeline
 
 def infer(generator, input_messages):
-    messages = input_messages + [""]
+    # Remove any newlines as they interfere with indexing
+    messages = [message.replace("\n", "\t") for message in input_messages] + [""]
 
     # This loop will exit when the AI adds a newline at the end of its message
     while len(messages) < len(input_messages) + 2:
