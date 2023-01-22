@@ -1,3 +1,5 @@
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 import discord
 import os
 import torch
@@ -26,20 +28,22 @@ def main():
 
     client = discord.Client(intents=intents)
 
-    @client.event
-    async def on_message(message):
-        if message.author == client.user:
-            return
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        @client.event
+        async def on_message(message):
+            if message.author == client.user:
+                return
 
-        async with message.channel.typing():
-            message_texts = [message.content]
-            async for other_message in message.channel.history(before=message, limit=5):
-                message_texts.append(other_message.content)
-            message_texts.reverse()
+            async with message.channel.typing():
+                message_texts = [message.content]
+                async for other_message in message.channel.history(before=message, limit=5):
+                    message_texts.append(other_message.content)
+                message_texts.reverse()
 
-            our_text = infer(generator, message_texts)
+                loop = asyncio.get_event_loop()
+                our_text = await loop.run_in_executor(executor, infer, generator, message_texts)
 
-        if our_text:
-            await message.channel.send(our_text)
+            if our_text:
+                await message.channel.send(our_text)
 
-    client.run(os.environ["DISCORD_TOKEN"])
+        client.run(os.environ["DISCORD_TOKEN"])
