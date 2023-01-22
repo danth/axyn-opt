@@ -1,36 +1,25 @@
 import discord
 import os
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import pipeline
 
-def load_model():
-    model = AutoModelForCausalLM.from_pretrained("facebook/opt-350m", torch_dtype=torch.bfloat16)
-    tokenizer = AutoTokenizer.from_pretrained("facebook/opt-350m", use_fast=False)
-    return (model, tokenizer)
-
-def infer(model, tokenizer, input_messages):
+def infer(generator, input_messages):
     messages = input_messages + [""]
 
     while len(messages) < len(input_messages) + 2:
         input_text = "\n".join(messages)
-        input_ids = tokenizer(input_text, return_tensors="pt").input_ids
-
-        generated_ids = model.generate(
-            input_ids,
-            num_return_sequences=1,
-            max_new_tokens=10,
-            do_sample=True,
-            temperature=1,
-            top_k=25
-        )
-
-        result_text = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+        result_text = generator(input_text)[0]["generated_text"]
         messages = result_text.split("\n")
 
     return messages[len(input_messages)]
 
 def main():
-    (model, tokenizer) = load_model()
+    generator = pipeline(
+        "text-generation",
+        model="facebook/opt-350m",
+        do_sample=True,
+        max_new_tokens=5
+    )
 
     intents = discord.Intents.default()
     intents.message_content = True
@@ -48,7 +37,7 @@ def main():
                 message_texts.append(other_message.content)
             message_texts.reverse()
 
-            our_text = infer(model, tokenizer, message_texts)
+            our_text = infer(generator, message_texts)
 
         if our_text:
             await message.channel.send(our_text)
