@@ -47,7 +47,7 @@ def main():
 
             async with message.channel.typing():
                 message_texts = [message.content]
-                async for other_message in message.channel.history(before=message, limit=5):
+                async for other_message in message.channel.history(before=message, limit=15):
                     message_texts.append(other_message.content)
                 message_texts.reverse()
 
