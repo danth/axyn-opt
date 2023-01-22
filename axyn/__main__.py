@@ -8,9 +8,19 @@ from transformers import pipeline
 def infer(generator, input_messages):
     messages = input_messages + [""]
 
+    # This loop will exit when the AI adds a newline at the end of its message
     while len(messages) < len(input_messages) + 2:
         input_text = "\n".join(messages)
         result_text = generator(input_text)[0]["generated_text"]
+
+        if result_text == input_text:
+            if len(messages) <= len(input_messages):
+                # Nothing was generated at all
+                return None
+            else:
+                # Nothing was generated in the current iteration
+                return messages[len(input_messages)]
+
         messages = result_text.split("\n")
 
     return messages[len(input_messages)]
