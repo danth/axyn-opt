@@ -6,6 +6,22 @@ import random
 import torch
 from transformers import pipeline
 
+async def collect_texts(message):
+    texts = [message.content]
+    texts_length = len(message.content)
+
+    async for other_message in message.channel.history(before=message):
+        # Limit the prompt to a reasonable length (counted in characters)
+        if texts_length >= 1000:
+            break
+
+        texts.append(other_message.content)
+        texts_length += len(other_message.content)
+
+    texts.reverse()
+
+    return texts
+
 def generate_message(generator, input_messages):
     # Remove any newlines as they interfere with indexing
     messages = [message.replace("\n", "\t") for message in input_messages] + [""]
@@ -91,13 +107,10 @@ def main():
     with ThreadPoolExecutor(max_workers=1) as executor:
         async def reply_to(message):
             async with message.channel.typing():
-                message_texts = [message.content]
-                async for other_message in message.channel.history(before=message, limit=15):
-                    message_texts.append(other_message.content)
-                message_texts.reverse()
+                texts = await collect_texts(message)
 
                 loop = asyncio.get_event_loop()
-                our_text = await loop.run_in_executor(executor, generate_message, generator, message_texts)
+                our_text = await loop.run_in_executor(executor, generate_message, generator, texts)
 
             if our_text:
                 await message.channel.send(our_text)
