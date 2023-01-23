@@ -87,6 +87,17 @@ def main():
     client = discord.Client(intents=intents)
 
     with ThreadPoolExecutor(max_workers=1) as executor:
+        async def rotate_status():
+            while True:
+                loop = asyncio.get_event_loop()
+                activity = await loop.run_in_executor(executor, generate_status, generator)
+
+                await client.change_presence(activity=activity)
+
+                # Wait between 1 hour and 12 hours before changing the status again
+                time_to_wait = random.randint(60 * 60, 60 * 60 * 12)
+                await asyncio.sleep(time_to_wait)
+
         @client.event
         async def on_ready():
             # Remove all slash commands in case they exist from a previous
@@ -95,7 +106,7 @@ def main():
             commands.clear_commands(guild=None)
             await commands.sync()
 
-            await client.change_presence(activity=generate_status(generator))
+            asyncio.create_task(rotate_status())
 
         @client.event
         async def on_message(message):
