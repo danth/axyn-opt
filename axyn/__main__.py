@@ -64,10 +64,9 @@ def generate_status(generator):
                 continue
 
         # Remove the prompt
-        words = result_text.split(" ")[1:]
-        if len(words) == 0:
+        name = result_text.removeprefix(prompt).strip()
+        if not name:
             continue
-        name = " ".join(words)
 
         return discord.Activity(name=name, type=activity_type)
 
