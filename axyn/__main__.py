@@ -86,7 +86,22 @@ def main():
 
     client = discord.Client(intents=intents)
 
+    reply_tasks = {}
+
     with ThreadPoolExecutor(max_workers=1) as executor:
+        async def reply_to(message):
+            async with message.channel.typing():
+                message_texts = [message.content]
+                async for other_message in message.channel.history(before=message, limit=15):
+                    message_texts.append(other_message.content)
+                message_texts.reverse()
+
+                loop = asyncio.get_event_loop()
+                our_text = await loop.run_in_executor(executor, generate_message, generator, message_texts)
+
+            if our_text:
+                await message.channel.send(our_text)
+
         async def rotate_status():
             while True:
                 loop = asyncio.get_event_loop()
@@ -113,16 +128,14 @@ def main():
             if message.author == client.user:
                 return
 
-            async with message.channel.typing():
-                message_texts = [message.content]
-                async for other_message in message.channel.history(before=message, limit=15):
-                    message_texts.append(other_message.content)
-                message_texts.reverse()
+            # If we are still responding to a previous message, cancel that
+            # task. This prevents Axyn from building up a backlog of tasks for
+            # the same channel, so it won't send multiple disjointed messages
+            # when it catches up.
+            if message.channel.id in reply_tasks:
+                reply_tasks[message.channel.id].cancel()
 
-                loop = asyncio.get_event_loop()
-                our_text = await loop.run_in_executor(executor, generate_message, generator, message_texts)
+            reply_tasks[message.channel.id] = asyncio.create_task(reply_to(message))
 
-            if our_text:
-                await message.channel.send(our_text)
 
         client.run(os.environ["DISCORD_TOKEN"])
