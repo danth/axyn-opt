@@ -35,7 +35,7 @@ def generate_message(generator, input_messages):
 def generate_status(generator):
     (prompt, activity_type) = random.choice([
         ("Competing in", discord.ActivityType.competing),
-        ("Listening", discord.ActivityType.listening),
+        ("Listening to", discord.ActivityType.listening),
         ("Playing", discord.ActivityType.playing),
         ("Streaming", discord.ActivityType.streaming),
         ("Watching", discord.ActivityType.watching)
