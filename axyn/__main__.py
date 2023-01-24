@@ -61,7 +61,7 @@ def generate_status(generator):
         prompt,
         temperature=1.0,
         top_k=150,
-        max_new_tokens=8,
+        max_new_tokens=5,
         num_return_sequences=10
     )
 
