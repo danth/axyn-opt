@@ -74,10 +74,17 @@ def generate_status(generator):
         else:
             continue
 
-        # Remove some invalid or boring results
-        for stop_word in {"\n", "it", "this", "that"}:
-            if stop_word in result_text:
-                continue
+        # Status messages cannot contain newlines
+        if "\n" in result_text:
+            continue
+
+        # Remove some boring results
+        if "it" in result_text:
+            continue
+        if "this" in result_text:
+            continue
+        if "that" in result_text:
+            continue
 
         # Remove the prompt
         name = result_text.removeprefix(prompt).strip()
