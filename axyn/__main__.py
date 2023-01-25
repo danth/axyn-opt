@@ -41,8 +41,7 @@ def generate_message(generator, input_messages):
 
         for stop_word in {"nigga", "nigger", "nig nog", "fag", "whore", "slut"}:
             if stop_word in result_text:
-                # Try again for a less offensive result
-                return generate_message(generator, input_messages)
+                return None
 
         messages = result_text.split("\n")
 
