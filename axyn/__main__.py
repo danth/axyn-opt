@@ -24,31 +24,37 @@ async def collect_texts(message):
     return texts
 
 def generate_message(generator, input_messages):
+    bad_words = generator.tokenizer(
+        ["nigga", "nigger", "nig nog", "fag", "faggot", "slut"],
+        add_prefix_space=True,
+        add_special_tokens=False
+    ).input_ids
+
+    newline = generator.tokenizer("\n", add_special_tokens=False).input_ids[0]
+
     # Remove any newlines as they interfere with indexing
     messages = [message.replace("\n", "\t") for message in input_messages] + [""]
+    prompt = "\n".join(messages)
 
-    # This loop will exit when the AI adds a newline at the end of its message
-    while len(messages) < len(input_messages) + 2:
-        input_text = "\n".join(messages)
-        result_text = generator(input_text)[0]["generated_text"]
+    results = generator(
+        prompt,
+        bad_words_ids=bad_words,
+        eos_token_id=newline,
+        max_new_tokens=250,
+        return_full_text=False
+    )
 
-        if result_text == input_text:
-            if len(messages) <= len(input_messages):
-                # Nothing was generated at all
-                return None
-            else:
-                # Nothing was generated in the current iteration
-                return messages[len(input_messages)]
-
-        for stop_word in {"nigga", "nigger", "nig nog", "fag", "whore", "slut"}:
-            if stop_word in result_text:
-                return None
-
-        messages = result_text.split("\n")
-
-    return messages[len(input_messages)]
+    return results[0]["generated_text"]
 
 def generate_status(generator):
+    bad_words = generator.tokenizer(
+        ["nigga", "nigger", "nig nog", "fag", "faggot", "slut"],
+        add_prefix_space=True,
+        add_special_tokens=False
+    ).input_ids
+
+    newline = generator.tokenizer("\n", add_special_tokens=False).input_ids[0]
+
     (prompt, activity_type) = random.choice([
         ("Competing in", discord.ActivityType.competing),
         ("Listening to", discord.ActivityType.listening),
@@ -59,6 +65,8 @@ def generate_status(generator):
 
     results = generator(
         prompt,
+        bad_words_ids=bad_words,
+        suppress_tokens=[newline],
         temperature=1.0,
         top_k=150,
         max_new_tokens=7,
@@ -81,18 +89,6 @@ def generate_status(generator):
         # just a piece of punctuation left
         words = nltk.word_tokenize(result_text)
         if len(words) < 2:
-            continue
-
-        # Status messages cannot contain newlines
-        if "\n" in result_text:
-            continue
-
-        # Remove some boring results
-        if "it" in result_text:
-            continue
-        if "this" in result_text:
-            continue
-        if "that" in result_text:
             continue
 
         if activity_type == discord.ActivityType.streaming:
