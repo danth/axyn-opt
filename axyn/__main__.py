@@ -1,6 +1,7 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import discord
+import nltk
 import os
 import random
 import torch
@@ -60,17 +61,26 @@ def generate_status(generator):
         prompt,
         temperature=1.0,
         top_k=150,
-        max_new_tokens=5,
-        num_return_sequences=10
+        max_new_tokens=7,
+        num_return_sequences=10,
+        return_full_text=False
     )
 
     for result in results:
         result_text = result["generated_text"]
 
         # Slice up to the end of a sentence to ensure that the message makes sense
-        if "." in result_text:
-            result_text = result_text.split(".")[0]
-        else:
+        sentences = nltk.sent_tokenize(result_text)
+        if len(sentences) < 2:
+            # If there was no split, then the first sentence might have been cut off
+            continue
+
+        result_text = sentences[0].strip()
+
+        # If the sentence ended immediately after the prompt, we could have
+        # just a piece of punctuation left
+        words = nltk.word_tokenize(result_text)
+        if len(words) < 2:
             continue
 
         # Status messages cannot contain newlines
@@ -85,15 +95,13 @@ def generate_status(generator):
         if "that" in result_text:
             continue
 
-        # Remove the prompt
-        name = result_text.removeprefix(prompt).strip()
-        if not name:
-            continue
-
         if activity_type == discord.ActivityType.streaming:
-            return discord.Streaming(name=name, url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+            return discord.Streaming(
+                name=result_text,
+                url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+            )
         else:
-            return discord.Activity(name=name, type=activity_type)
+            return discord.Activity(name=result_text, type=activity_type)
 
     # All of the results were unsuitable, try again
     return generate_status(generator)
