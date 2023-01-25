@@ -91,7 +91,10 @@ def generate_status(generator):
         if not name:
             continue
 
-        return discord.Activity(name=name, type=activity_type)
+        if activity_type == discord.ActivityType.streaming:
+            return discord.Streaming(name=name, url="https://twitch.tv/heythere")
+        else:
+            return discord.Activity(name=name, type=activity_type)
 
     # All of the results were unsuitable, try again
     return generate_status(generator)
