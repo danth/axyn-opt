@@ -5,7 +5,7 @@ import nltk
 import os
 import random
 import torch
-from transformers import pipeline
+from transformers import pipeline, StoppingCriteria, StoppingCriteriaList
 
 async def collect_texts(message):
     texts = [message.content]
@@ -23,6 +23,14 @@ async def collect_texts(message):
 
     return texts
 
+class TokenStoppingCriteria(StoppingCriteria):
+    def __init__(self, token):
+        self.token = token
+
+    def __call__(self, input_ids: torch.LongTensor, score: torch.FloatTensor, **kwargs):
+        # If the last token generated was our target token, then stop
+        return input_ids.squeeze()[-1] == self.token
+
 def generate_message(generator, input_messages):
     bad_words = generator.tokenizer(
         ["nigga", "nigger", "nig nog", "fag", "faggot", "slut"],
@@ -39,12 +47,12 @@ def generate_message(generator, input_messages):
     results = generator(
         prompt,
         bad_words_ids=bad_words,
-        eos_token_id=newline,
+        stopping_criteria=StoppingCriteriaList([TokenStoppingCriteria(newline)]),
         max_new_tokens=250,
         return_full_text=False
     )
 
-    return results[0]["generated_text"]
+    return results[0]["generated_text"].strip()
 
 def generate_status(generator):
     bad_words = generator.tokenizer(
