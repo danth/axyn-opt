@@ -31,7 +31,7 @@
           src = ./.;
 
           postPatch = ''
-            substituteInPlace axyn/__main__.py \
+            substituteInPlace axyn/generator.py \
               --replace facebook/opt-350m ${pkgs.callPackage ./model.nix {}}
           '';
 
