@@ -3,6 +3,8 @@ import nltk
 import random
 from transformers import pipeline, StoppingCriteria, StoppingCriteriaList
 
+BAD_WORDS = ["nigga", "nigger", "nig nog", "fag", "faggot", "slut"]
+
 class TokenStoppingCriteria(StoppingCriteria):
     def __init__(self, token):
         self.token = token
@@ -28,12 +30,6 @@ class Generator:
             max_new_tokens=5
         )
 
-        self.bad_words = self.generator.tokenizer(
-            ["nigga", "nigger", "nig nog", "fag", "faggot", "slut"],
-            add_prefix_space=True,
-            add_special_tokens=False
-        ).input_ids
-
         self.newline = self.generator.tokenizer(
             "\n",
             add_special_tokens=False
@@ -51,13 +47,16 @@ class Generator:
 
         results = self.generator(
             prompt,
-            bad_words_ids=self.bad_words,
             stopping_criteria=StoppingCriteriaList([TokenStoppingCriteria(self.newline)]),
             max_new_tokens=250,
             return_full_text=False
         )
+        result = results[0]["generated_text"].strip()
 
-        return results[0]["generated_text"].strip()
+        if any(bad_word in result.lower() for bad_word in BAD_WORDS):
+            return None
+
+        return result
 
     def generate_status(self):
         (prompt, activity_type) = random.choice([
@@ -70,7 +69,6 @@ class Generator:
 
         results = self.generator(
             prompt,
-            bad_words_ids=self.bad_words,
             suppress_tokens=[self.newline],
             temperature=1.0,
             top_k=150,
@@ -94,6 +92,9 @@ class Generator:
             # just a piece of punctuation left
             words = nltk.word_tokenize(result_text)
             if len(words) < 2:
+                continue
+
+            if any(bad_word in result_text.lower() for bad_word in BAD_WORDS):
                 continue
 
             if activity_type == discord.ActivityType.streaming:
