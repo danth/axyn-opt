@@ -15,14 +15,6 @@ class TokenStoppingCriteria(StoppingCriteria):
 
 class Generator:
     def __init__(self):
-        self.generator = None
-
-    # Returns True when the status needs to be changed to online,
-    # False when the model was already loaded
-    def load(self):
-        if self.generator is not None:
-            return False
-
         self.generator = pipeline(
             "text-generation",
             model="facebook/opt-350m",
@@ -34,11 +26,6 @@ class Generator:
             "\n",
             add_special_tokens=False
         ).input_ids[0]
-
-        return True
-
-    def unload(self):
-        self.generator = None
 
     def generate_message(self, input_messages):
         # Remove any newlines as they interfere with indexing

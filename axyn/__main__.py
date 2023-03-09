@@ -2,6 +2,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import discord
 import os
+import random
 
 from axyn.generator import Generator
 
@@ -24,55 +25,42 @@ async def collect_texts(message):
 def main():
     intents = discord.Intents.default()
     intents.message_content = True
-    client = discord.Client(intents=intents, status=discord.Status.idle)
+    client = discord.Client(intents=intents)
 
     generator = Generator()
 
     tasks = {}
 
     with ThreadPoolExecutor(max_workers=1) as executor:
-        async def appear_idle():
-            await client.change_presence(status=discord.Status.idle)
+        async def clear_commands():
+            commands = discord.app_commands.CommandTree(client)
+            commands.clear_commands(guild=None)
+            await commands.sync()
 
-        async def appear_online():
-            loop = asyncio.get_event_loop()
-            activity = await loop.run_in_executor(executor, generator.generate_status)
-            await client.change_presence(status=discord.Status.online, activity=activity)
+        async def rotate_status():
+            while True:
+                loop = asyncio.get_event_loop()
+                activity = await loop.run_in_executor(executor, generator.generate_status)
+                await client.change_presence(activity=activity)
 
-        async def unload_later():
-            await asyncio.sleep(15 * 60)
-            generator.unload()
-            await appear_idle()
+                # Wait between 1 and 12 hours
+                time_to_wait = random.randint(60 * 60, 60 * 60 * 12)
+                await asyncio.sleep(time_to_wait)
 
-        async def load():
-            loop = asyncio.get_event_loop()
-            status_changed = await loop.run_in_executor(executor, generator.load)
-
-            if status_changed:
-                asyncio.create_task(appear_online())
+        @client.event
+        async def on_ready():
+            asyncio.create_task(clear_commands())
+            asyncio.create_task(rotate_status())
 
         async def reply_to(message):
-            if "unload_later" in tasks:
-                tasks["unload_later"].cancel()
-
             async with message.channel.typing():
-                [_, texts] = await asyncio.gather(load(), collect_texts(message))
+                texts = await collect_texts(message)
 
                 loop = asyncio.get_event_loop()
                 our_text = await loop.run_in_executor(executor, generator.generate_message, texts)
 
             if our_text:
                 await message.channel.send(our_text)
-
-            tasks["unload_later"] = asyncio.create_task(unload_later())
-
-        @client.event
-        async def on_ready():
-            # Remove all slash commands in case they exist from a previous
-            # incarnation of Axyn
-            commands = discord.app_commands.CommandTree(client)
-            commands.clear_commands(guild=None)
-            await commands.sync()
 
         @client.event
         async def on_message(message):
