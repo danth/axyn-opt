@@ -1,4 +1,7 @@
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 import discord
+import functools
 import nltk
 import random
 from transformers import pipeline, StoppingCriteria, StoppingCriteriaList
@@ -27,12 +30,24 @@ class Generator:
             add_special_tokens=False
         ).input_ids[0]
 
-    def generate_message(self, input_messages):
+        # Generation can take a long time, so we run it on a separate thread to
+        # avoid losing connection to Discord in the meantime. This also queues
+        # up tasks so that only one is running at a time.
+        self.executor = ThreadPoolExecutor(max_workers=1)
+
+    async def generate(self, *args, **kwargs):
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            self.executor,
+            functools.partial(self.generator, *args, **kwargs)
+        )
+
+    async def generate_message(self, input_messages):
         # Remove any newlines as they interfere with indexing
         messages = [message.replace("\n", "\t") for message in input_messages] + [""]
         prompt = "\n".join(messages)
 
-        results = self.generator(
+        results = await self.generate(
             prompt,
             stopping_criteria=StoppingCriteriaList([TokenStoppingCriteria(self.newline)]),
             max_new_tokens=250,
@@ -45,7 +60,7 @@ class Generator:
 
         return result
 
-    def generate_status(self):
+    async def generate_status(self):
         (prompt, activity_type) = random.choice([
             ("Competing in", discord.ActivityType.competing),
             ("Listening to", discord.ActivityType.listening),
@@ -54,7 +69,7 @@ class Generator:
             ("Watching", discord.ActivityType.watching)
         ])
 
-        results = self.generator(
+        results = await self.generate(
             prompt,
             suppress_tokens=[self.newline],
             temperature=1.0,
@@ -93,5 +108,5 @@ class Generator:
                 return discord.Activity(name=result_text, type=activity_type)
 
         # All of the results were unsuitable, try again
-        return self.generate_status()
+        return await self.generate_status()
 
