@@ -32,7 +32,7 @@
 
           postPatch = ''
             substituteInPlace axyn/generator.py \
-              --replace facebook/opt-350m ${pkgs.callPackage ./model.nix {}}
+              --replace gpt2-large ${pkgs.callPackage ./model.nix {}}
           '';
 
           nativeBuildInputs = [ pkgs.makeWrapper ];

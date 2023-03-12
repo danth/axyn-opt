@@ -20,7 +20,7 @@ class Generator:
     def __init__(self):
         self.generator = pipeline(
             "text-generation",
-            model="facebook/opt-350m",
+            model="gpt2-large",
             do_sample=True,
             max_new_tokens=5
         )

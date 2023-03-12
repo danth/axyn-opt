@@ -1,24 +1,20 @@
 { fetchurl, linkFarmFromDrvs }:
-let version = "10517ad5b51c8c6e02db7824d8494721d4874488";
-in linkFarmFromDrvs "opt-350m" [
+let version = "212095d5832abbf9926672e1c1e8d14312a3be20";
+in linkFarmFromDrvs "gpt2-large" [
   (fetchurl {
-    url = "https://huggingface.co/facebook/opt-350m/resolve/${version}/merges.txt";
+    url = "https://huggingface.co/gpt2-large/resolve/${version}/merges.txt";
     sha256 = "HOFmR3PFDz4MyIQmGak+3EYkUltyixiKngvjO3cmrcU=";
   })
   (fetchurl {
-    url = "https://huggingface.co/facebook/opt-350m/resolve/${version}/config.json";
-    sha256 = "Psdd8OFmR240LPlSJrp3XYFVRJp7HkMHKLPKJrQl5Ks=";
+    url = "https://huggingface.co/gpt2-large/resolve/${version}/config.json";
+    sha256 = "f8zc/WYiBVNCpzTGY+4LYf9P1pf0JGdZXfC/REjIwXA=";
   })
   (fetchurl {
-    url = "https://huggingface.co/facebook/opt-350m/resolve/${version}/pytorch_model.bin";
-    sha256 = "pSI65vPCbG2QAD+WprzZpKqu8NNvymRpES7+65hfKEI=";
+    url = "https://huggingface.co/gpt2-large/resolve/${version}/pytorch_model.bin";
+    sha256 = "8d3ade6b55ac440e926112267b9ec784097437c7300544b8beec562a411428ec";
   })
   (fetchurl {
-    url = "https://huggingface.co/facebook/opt-350m/resolve/${version}/tokenizer_config.json";
-    sha256 = "0eQYW0OgoGQhq3IY1cGndTUL0TAkUHs0++0l3PbBTGs=";
-  })
-  (fetchurl {
-    url = "https://huggingface.co/facebook/opt-350m/resolve/${version}/vocab.json";
-    sha256 = "BrTUbI51LUECE9lUjrJ6VNtw/aAxm2Jx+41Z3q1eHKs=";
+    url = "https://huggingface.co/gpt2-large/resolve/${version}/vocab.json";
+    sha256 = "GWE5ZovmPztdZXRCcxeugvYSqXxdHNrzbtIlbb9jZ4M=";
   })
 ]
