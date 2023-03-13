@@ -33,6 +33,9 @@
           postPatch = ''
             substituteInPlace axyn/generator.py \
               --replace gpt2-large ${pkgs.callPackage ./model.nix {}}
+
+            substituteInPlace axyn/voice.py \
+              --replace mimic ${pkgs.mimic}/bin/mimic
           '';
 
           nativeBuildInputs = [ pkgs.makeWrapper ];

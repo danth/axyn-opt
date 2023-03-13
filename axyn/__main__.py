@@ -5,6 +5,7 @@ import os
 import random
 
 from axyn.generator import Generator
+from axyn.voice import VoiceManager
 
 async def collect_texts(message):
     texts = [message.content]
@@ -28,6 +29,7 @@ def main():
     client = discord.Client(intents=intents)
     generator = Generator()
     tasks = {}
+    voice = VoiceManager()
 
     async def clear_commands():
         commands = discord.app_commands.CommandTree(client)
@@ -54,7 +56,10 @@ def main():
             our_text = await generator.generate_message(texts)
 
         if our_text:
-            await message.channel.send(our_text)
+            asyncio.create_task(message.channel.send(our_text))
+
+            if isinstance(message.author, discord.Member) and message.author.voice:
+                asyncio.create_task(voice.play_tts(message.author.voice.channel, our_text))
 
     @client.event
     async def on_message(message):
