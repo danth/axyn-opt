@@ -24,8 +24,9 @@ class Voice:
                 self.timeout_task.cancel()
 
             if self.connection and self.connection.is_connected():
-                await self.connection.move_to(channel)
-                await channel.guild.change_voice_state(channel=channel, self_deaf=True)
+                if self.connection.channel != channel:
+                    await self.connection.move_to(channel)
+                    await channel.guild.change_voice_state(channel=channel, self_deaf=True)
             else:
                 self.connection = await channel.connect(self_deaf=True)
 
