@@ -25,8 +25,9 @@ class Voice:
 
             if self.connection and self.connection.is_connected():
                 await self.connection.move_to(channel)
+                await channel.guild.change_voice_state(channel=channel, self_deaf=True)
             else:
-                self.connection = await channel.connect()
+                self.connection = await channel.connect(self_deaf=True)
 
             yield self.connection
 
